@@ -1,0 +1,32 @@
+name: Intel bison bottle
+
+on:
+  push:
+    paths:
+      - .github/workflows/intel-bison.yml
+  workflow_dispatch:
+
+jobs:
+  bison:
+    runs-on: macos-15-intel
+    steps:
+      - name: brew config (before update)
+        run: brew config
+
+      - name: brew update
+        run: brew update
+
+      - name: brew config (after update)
+        run: brew config
+
+      - name: Bottle info
+        run: brew info --json=v2 bison | jq '.formulae[0].bottle.stable.files | keys'
+
+      - name: brew install bison
+        run: brew install --verbose bison
+
+      - name: brew doctor
+        run: brew doctor || true
+
+      - name: bison version
+        run: $(brew --prefix bison)/bin/bison --version
