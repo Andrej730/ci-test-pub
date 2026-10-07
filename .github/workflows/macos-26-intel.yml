@@ -1,0 +1,13 @@
+name: macos-26-intel probe
+
+on:
+  push:
+    paths:
+      - .github/workflows/macos-26-intel.yml
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: macos-26-intel
+    steps:
+      - run: uname -m && sw_vers && sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize && brew --version | head -1 && brew list --versions openssl@3 gettext pkgconf
