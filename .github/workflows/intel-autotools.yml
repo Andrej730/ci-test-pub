@@ -1,0 +1,26 @@
+name: Intel autotools
+
+on:
+  push:
+    paths:
+      - .github/workflows/intel-autotools.yml
+  workflow_dispatch:
+
+jobs:
+  autotools:
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - name: brew update
+        run: brew update
+
+      - name: brew install autoconf
+        run: time brew install --verbose autoconf
+
+      - name: brew install automake
+        run: time brew install --verbose automake
+
+      - name: versions
+        run: |
+          autoconf --version | head -1
+          automake --version | head -1
