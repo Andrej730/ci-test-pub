@@ -1,0 +1,54 @@
+name: macOS inventory
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  inventory:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    steps:
+      - name: System
+        run: |
+          uname -a
+          sw_vers
+          sysctl -n machdep.cpu.brand_string
+          echo "cores: $(sysctl -n hw.ncpu), mem: $(( $(sysctl -n hw.memsize) / 1073741824 )) GB"
+
+      - name: Rosetta
+        run: |
+          arch -x86_64 /usr/bin/true && echo "Rosetta: available" || echo "Rosetta: not available"
+          pgrep -q oahd && echo "oahd running" || echo "oahd not running"
+
+      - name: Homebrew
+        run: |
+          which -a brew
+          brew --version
+          brew --prefix
+          ls -d /opt/homebrew /usr/local/Homebrew 2>/dev/null || true
+
+      - name: Formulae (with versions)
+        run: brew list --formula --versions
+
+      - name: Casks
+        run: brew list --cask --versions
+
+      - name: Things the IfcOpenShell build cares about
+        run: |
+          for f in git bison autoconf automake libtool m4 pkgconf pkg-config gettext openssl@3 libffi findutils gmp mpfr cmake ninja ccache xz zstd python@3.13 python@3.14 qt; do
+            v=$(brew list --versions "$f" 2>/dev/null) && echo "brew:   $v" || echo "brew:   $f (not installed)"
+          done
+          echo
+          for c in git bison autoconf automake pkg-config cmake ninja ccache python3 find xargs; do
+            p=$(command -v "$c") && echo "$c -> $p ($("$c" --version 2>&1 | head -1))" || echo "$c -> (none)"
+          done
+
+      - name: Brew libraries visible to builds
+        run: |
+          prefix=$(brew --prefix)
+          ls "$prefix/lib" | grep -E '^lib(gmp|mpfr|ssl|crypto|intl|ffi|zstd|xml2|pcre)' || true
+          ls "$prefix/lib/pkgconfig" 2>/dev/null | head -50 || true
