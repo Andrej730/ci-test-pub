@@ -1,0 +1,18 @@
+name: brew update with and without core/cask taps
+
+on: workflow_dispatch
+
+jobs:
+  update:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+        untap: [false, true]
+    steps:
+      - run: brew tap
+      - if: matrix.untap
+        run: time brew untap homebrew/core homebrew/cask
+      - run: time brew update
+      - run: brew doctor || true
