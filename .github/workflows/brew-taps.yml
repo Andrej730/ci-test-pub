@@ -1,0 +1,53 @@
+name: brew taps and update speed
+
+on:
+  push:
+    paths:
+      - .github/workflows/brew-taps.yml
+  workflow_dispatch:
+
+jobs:
+  taps:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+        # update: plain `brew update`; untap: untap all taps first; skip: no update at all.
+        variant: [update, untap, skip]
+    name: ${{ matrix.runner }} / ${{ matrix.variant }}
+    steps:
+      - name: brew config
+        run: brew config
+
+      - name: Taps
+        run: |
+          taps_dir="$(brew --repository)/Library/Taps"
+          brew tap
+          echo
+          for d in "$taps_dir"/*/*; do
+            [ -d "$d/.git" ] || continue
+            size=$(du -sh "$d" | cut -f1)
+            files=$(git -C "$d" ls-files | wc -l | tr -d ' ')
+            last=$(git -C "$d" log -1 --format=%cs)
+            echo "${d#$taps_dir/}: $size, $files files, last commit $last"
+          done
+
+      - name: Untap all taps
+        if: matrix.variant == 'untap'
+        run: |
+          for t in $(brew tap); do
+            time brew untap --force "$t" || echo "failed to untap $t"
+          done
+          brew tap
+
+      - name: brew update
+        if: matrix.variant != 'skip'
+        run: time brew update
+
+      - name: brew install bison (no auto-update)
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+        run: |
+          time brew install bison
+          "$(brew --prefix bison)/bin/bison" --version | head -1
