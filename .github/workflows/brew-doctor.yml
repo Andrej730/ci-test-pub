@@ -1,0 +1,23 @@
+name: brew doctor
+
+on:
+  push:
+    paths:
+      - .github/workflows/brew-doctor.yml
+  workflow_dispatch:
+
+jobs:
+  doctor:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    steps:
+      - name: Flags that silence some doctor checks
+        run: |
+          env | grep '^HOMEBREW_' || echo "no HOMEBREW_* env vars"
+          echo "homebrew.devcmdrun: $(git -C "$(brew --repository)" config --get homebrew.devcmdrun || echo unset)"
+
+      - name: brew doctor
+        run: brew doctor || true
