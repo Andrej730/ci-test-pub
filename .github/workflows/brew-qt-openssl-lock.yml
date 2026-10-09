@@ -1,0 +1,40 @@
+name: brew install qt openssl@3 lock
+
+on:
+  push:
+    paths:
+      - .github/workflows/brew-qt-openssl-lock.yml
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        # qt: plain `brew install qt` (repro).
+        # unlink: `brew unlink openssl@3` first (proposed fix).
+        # openssl4: just `brew install openssl@4` (smaller repro?).
+        variant: [qt, unlink, openssl4]
+    steps:
+      - name: Image and openssl state
+        run: |
+          echo "ImageOS=$ImageOS ImageVersion=$ImageVersion"
+          brew --version
+          brew list --versions | grep -E '^openssl' || true
+          ls -la "$(brew --prefix)/bin/openssl" || true
+          ls -la "$(brew --prefix)/opt" | grep -i openssl || true
+
+      - name: brew update
+        run: |
+          brew untap homebrew/core homebrew/cask
+          brew update
+
+      - if: matrix.variant == 'unlink'
+        run: brew unlink openssl@3
+
+      - if: matrix.variant == 'openssl4'
+        run: brew install openssl@4
+
+      - if: matrix.variant != 'openssl4'
+        run: brew install qt
