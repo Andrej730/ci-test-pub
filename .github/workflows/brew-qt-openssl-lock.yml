@@ -30,6 +30,12 @@ jobs:
           brew untap homebrew/core homebrew/cask
           brew update
 
+      - name: brew config
+        run: brew config
+
+      - name: brew doctor
+        run: brew doctor || true
+
       - if: matrix.variant == 'unlink'
         run: brew unlink openssl@3
 
