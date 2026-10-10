@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-15, ubuntu-latest]
+        runner: [macos-15, macos-15-intel, ubuntu-latest]
     steps:
       # Homebrew is preinstalled on ubuntu runners but not on PATH.
       - if: runner.os == 'Linux'
