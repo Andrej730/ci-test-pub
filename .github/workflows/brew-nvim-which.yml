@@ -1,0 +1,26 @@
+name: brew install nvim then which
+
+on:
+  push:
+    paths:
+      - .github/workflows/brew-nvim-which.yml
+  workflow_dispatch:
+
+jobs:
+  nvim:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    steps:
+      - name: brew install nvim
+        run: brew install nvim
+
+      # New step = new shell; checks the installed binary is on the step PATH without any $GITHUB_PATH tweaks.
+      - name: which nvim
+        run: |
+          echo "brew prefix: $(brew --prefix)"
+          which -a nvim
+          ls -la "$(which nvim)"
+          nvim --version | head -1
