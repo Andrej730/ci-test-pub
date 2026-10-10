@@ -1,0 +1,42 @@
+name: brew link --force bison
+
+on:
+  push:
+    paths:
+      - .github/workflows/brew-link-force-bison.yml
+  workflow_dispatch:
+
+jobs:
+  link:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, ubuntu-latest]
+    steps:
+      # Homebrew is preinstalled on ubuntu runners but not on PATH.
+      - if: runner.os == 'Linux'
+        run: echo "/home/linuxbrew/.linuxbrew/bin" >> "$GITHUB_PATH"
+
+      - name: brew install bison
+        run: brew install bison
+
+      - name: bison before link
+        run: |
+          which -a bison || true
+          bison --version | head -1 || true
+          brew info --json=v2 bison | jq '.formulae[0] | {keg_only, keg_only_reason, linked_keg}'
+
+      # Expect macOS to refuse (keg_only :provided_by_macos) and still exit 0.
+      - name: brew link --force bison
+        run: |
+          set +e
+          brew link --force bison
+          echo "exit code: $?"
+
+      - name: bison after link
+        run: |
+          which -a bison || true
+          bison --version | head -1 || true
+          ls -la "$(brew --prefix)/bin/bison" || true
+          brew info --json=v2 bison | jq '.formulae[0].linked_keg'
