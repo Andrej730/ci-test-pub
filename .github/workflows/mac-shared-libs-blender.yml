@@ -1,0 +1,70 @@
+name: mac-shared-libs-blender
+
+# Repro of the mac-shared-libs-python issue inside Blender with the Bonsai extension.
+# "fixed" uses a Bonsai daily built after IfcOpenShell aee494a (binaries 6022a6d).
+# Bonsai is only released for macos-arm64.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/mac-shared-libs-blender.yml
+
+permissions: {}
+
+env:
+  BLENDER_VERSION: 4.5.14
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: bonsai-0.9.0
+            tag: bonsai-0.9.0
+            zip: bonsai_py311-0.9.0-macos-arm64.zip
+          - variant: fixed-daily
+            tag: bonsai-0.9.1-alpha2610140758
+            zip: bonsai_py311-0.9.1-alpha261014-macos-arm64.zip
+    runs-on: macos-15
+    steps:
+      - name: Install Blender
+        run: |
+          curl -fsSLo blender.dmg "https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/blender-${BLENDER_VERSION}-macos-arm64.dmg"
+          hdiutil attach -nobrowse -mountpoint /Volumes/Blender blender.dmg
+          cp -R /Volumes/Blender/Blender.app "$RUNNER_TEMP/"
+          hdiutil detach /Volumes/Blender
+          echo "BLENDER=$RUNNER_TEMP/Blender.app/Contents/MacOS/Blender" >> "$GITHUB_ENV"
+
+      - name: Install Bonsai
+        env:
+          TAG: ${{ matrix.tag }}
+          ZIP: ${{ matrix.zip }}
+        run: |
+          curl -fsSLO "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/$TAG/$ZIP"
+          "$BLENDER" -b --command extension install-file -r user_default -e "$ZIP"
+
+      - name: Load ifcopenshell plug-ins in Blender
+        run: |
+          cat > check.py <<'EOF'
+          import ctypes, pathlib, sys
+          import ifcopenshell, ifcopenshell.geom
+          print("ifcopenshell", ifcopenshell.version, ifcopenshell.__file__)
+          pkg = pathlib.Path(ifcopenshell.__file__).parent
+          failed = []
+          for path in sorted(pkg.glob("*.dylib")):
+              try:
+                  ctypes.CDLL(str(path))
+              except OSError as e:
+                  failed.append(path.name)
+                  print(f"FAIL {path.name}: {e}\n")
+          for kernel in ("opencascade", "cgal", "cgal-simple", "manifold"):
+              ok = ifcopenshell.geom.has_geometry_library(kernel)
+              print(f"kernel {kernel}: {ok}")
+              if not ok:
+                  failed.append(f"kernel {kernel}")
+          print(f"{len(failed)} failed: {failed}")
+          sys.exit(bool(failed))
+          EOF
+          "$BLENDER" -b --python-exit-code 1 --python check.py
