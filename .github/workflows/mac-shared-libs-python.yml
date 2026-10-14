@@ -1,0 +1,90 @@
+name: mac-shared-libs-python
+
+# Repro: macOS ifcopenshell 0.9.0 binaries reference shared libs (gmp, mpfr, libxml2, pcre) by absolute
+# paths into the IfcOpenShell CI build tree (/Users/runner/work/IfcOpenShell/...), which doesn't exist here.
+# "fixed" builds a wheel from IfcOpenShell aee494a (binaries 6022a6d), what a corrective release would ship.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/mac-shared-libs-python.yml
+
+permissions: {}
+
+env:
+  IFCOPENSHELL_TEST_REF: 5c0bb2f3c9
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel]
+        variant: [pypi-0.9.0, fixed-aee494a]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install ifcopenshell 0.9.0 from PyPI
+        if: matrix.variant == 'pypi-0.9.0'
+        run: python -m pip install ifcopenshell==0.9.0 pytest
+
+      - name: Checkout IfcOpenShell at aee494a
+        if: matrix.variant == 'fixed-aee494a'
+        uses: actions/checkout@v5
+        with:
+          repository: IfcOpenShell/IfcOpenShell
+          ref: aee494ade45e6f1e61143036db53e78399c211b1
+          path: IfcOpenShell
+          persist-credentials: false
+          sparse-checkout: |
+            VERSION
+            README.md
+            src/ifcopenshell-python
+
+      - name: Build and install wheel from aee494a
+        if: matrix.variant == 'fixed-aee494a'
+        env:
+          PLATFORM: ${{ matrix.os == 'macos-15-intel' && 'macos64' || 'macosm164' }}
+        run: |
+          cd IfcOpenShell/src/ifcopenshell-python
+          make dist PLATFORM="$PLATFORM" PYVERSION=py312 IS_STABLE=TRUE
+          ls dist
+          python -m pip install dist/*.whl pytest
+
+      - name: Show absolute dylib references
+        run: |
+          pkg=$(python -c "import ifcopenshell, os; print(os.path.dirname(ifcopenshell.__file__))")
+          for f in "$pkg"/*.dylib "$pkg"/*.so; do
+            refs=$(otool -L "$f" | tail -n +2 | grep -E '^\s*/(Users|opt|usr/local)/' || true)
+            [ -n "$refs" ] && printf '== %s\n%s\n' "$(basename "$f")" "$refs"
+          done
+          true
+
+      - name: dlopen every packaged dylib
+        run: |
+          python - <<'EOF'
+          import ctypes, ifcopenshell, pathlib, sys
+          pkg = pathlib.Path(ifcopenshell.__file__).parent
+          failed = []
+          for path in sorted(pkg.glob("*.dylib")):
+              try:
+                  ctypes.CDLL(str(path))
+              except OSError as e:
+                  failed.append(path.name)
+                  print(f"FAIL {path.name}: {e}\n")
+          print(f"{len(failed)} failed: {failed}")
+          sys.exit(bool(failed))
+          EOF
+
+      - name: Run shared libraries test from IfcOpenShell
+        if: always()
+        run: |
+          mkdir pkgtest && cd pkgtest
+          base=https://raw.githubusercontent.com/IfcOpenShell/IfcOpenShell/$IFCOPENSHELL_TEST_REF/test/package
+          curl -fsSLO "$base/conftest.py"
+          curl -fsSLO "$base/test_ifcopenshell_python_shared_libraries.py"
+          python -m pytest -v test_ifcopenshell_python_shared_libraries.py -k "not every_plugin"
