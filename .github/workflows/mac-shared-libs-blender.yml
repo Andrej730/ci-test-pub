@@ -3,6 +3,7 @@ name: mac-shared-libs-blender
 # Repro of the mac-shared-libs-python issue inside Blender with the Bonsai extension.
 # "fixed" uses a Bonsai daily built after IfcOpenShell aee494a (binaries 6022a6d).
 # "post1" builds Bonsai from v0.9.0-post1 (2744f84, binaries b5e509b) the way publish-bonsai-unstable does.
+# "release-post1" installs the published bonsai-0.9.0post1 zips (py311 in Blender 4.5, py313 in Blender 5.2).
 # Bonsai is only released for macos-arm64.
 
 on:
@@ -50,9 +51,18 @@ jobs:
             tag: bonsai-0.9.1-alpha2610140758
             zip: bonsai_py311-0.9.1-alpha261014-macos-arm64.zip
           - variant: post1-2744f84
+          - variant: release-post1-py311
+            tag: bonsai-0.9.0post1
+            zip: bonsai_py311-0.9.0-post1-macos-arm64.zip
+          - variant: release-post1-py313
+            tag: bonsai-0.9.0post1
+            zip: bonsai_py313-0.9.0-post1-macos-arm64.zip
+            blender: 5.2.0
     runs-on: macos-15
     steps:
       - name: Install Blender
+        env:
+          BLENDER_VERSION: ${{ matrix.blender || env.BLENDER_VERSION }}
         run: |
           curl -fsSLo blender.dmg "https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/blender-${BLENDER_VERSION}-macos-arm64.dmg"
           hdiutil attach -nobrowse -mountpoint /Volumes/Blender blender.dmg
