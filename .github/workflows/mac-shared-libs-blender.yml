@@ -2,6 +2,7 @@ name: mac-shared-libs-blender
 
 # Repro of the mac-shared-libs-python issue inside Blender with the Bonsai extension.
 # "fixed" uses a Bonsai daily built after IfcOpenShell aee494a (binaries 6022a6d).
+# "post1" builds Bonsai from v0.9.0-post1 (3730ad9, binaries 62f6a78) the way publish-bonsai-unstable does.
 # Bonsai is only released for macos-arm64.
 
 on:
@@ -16,7 +17,28 @@ env:
   BLENDER_VERSION: 4.5.14
 
 jobs:
+  build-post1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: IfcOpenShell/IfcOpenShell
+          ref: 3730ad943e648d54662b91308dadcac3118c90eb
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - uses: astral-sh/setup-uv@v7
+      - name: Build Bonsai
+        run: cd src/bonsai && make dist PLATFORM=macosm1 PYVERSION=py311 IS_STABLE=TRUE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bonsai-post1
+          path: src/bonsai/dist/bonsai_*.zip
+
   test:
+    needs: build-post1
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +49,7 @@ jobs:
           - variant: fixed-daily
             tag: bonsai-0.9.1-alpha2610140758
             zip: bonsai_py311-0.9.1-alpha261014-macos-arm64.zip
+          - variant: post1-3730ad9
     runs-on: macos-15
     steps:
       - name: Install Blender
@@ -37,13 +60,23 @@ jobs:
           hdiutil detach /Volumes/Blender
           echo "BLENDER=$RUNNER_TEMP/Blender.app/Contents/MacOS/Blender" >> "$GITHUB_ENV"
 
-      - name: Install Bonsai
+      - name: Download Bonsai release
+        if: matrix.tag
         env:
           TAG: ${{ matrix.tag }}
           ZIP: ${{ matrix.zip }}
+        run: curl -fsSLO "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/$TAG/$ZIP"
+
+      - name: Download built Bonsai
+        if: matrix.variant == 'post1-3730ad9'
+        uses: actions/download-artifact@v4
+        with:
+          name: bonsai-post1
+
+      - name: Install Bonsai
         run: |
-          curl -fsSLO "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/$TAG/$ZIP"
-          "$BLENDER" -b --command extension install-file -r user_default -e "$ZIP"
+          ls bonsai_*.zip
+          "$BLENDER" -b --command extension install-file -r user_default -e bonsai_*.zip
 
       - name: Load ifcopenshell plug-ins in Blender
         run: |
