@@ -2,7 +2,7 @@ name: mac-shared-libs-blender
 
 # Repro of the mac-shared-libs-python issue inside Blender with the Bonsai extension.
 # "fixed" uses a Bonsai daily built after IfcOpenShell aee494a (binaries 6022a6d).
-# "post1" builds Bonsai from v0.9.0-post1 (3730ad9, binaries 62f6a78) the way publish-bonsai-unstable does.
+# "post1" builds Bonsai from v0.9.0-post1 (2744f84, binaries b5e509b) the way publish-bonsai-unstable does.
 # Bonsai is only released for macos-arm64.
 
 on:
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           repository: IfcOpenShell/IfcOpenShell
-          ref: 3730ad943e648d54662b91308dadcac3118c90eb
+          ref: 2744f8426bdef98a486406628a121298a5479690
           submodules: recursive
           persist-credentials: false
       - uses: actions/setup-python@v6
@@ -49,7 +49,7 @@ jobs:
           - variant: fixed-daily
             tag: bonsai-0.9.1-alpha2610140758
             zip: bonsai_py311-0.9.1-alpha261014-macos-arm64.zip
-          - variant: post1-3730ad9
+          - variant: post1-2744f84
     runs-on: macos-15
     steps:
       - name: Install Blender
@@ -68,7 +68,7 @@ jobs:
         run: curl -fsSLO "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/$TAG/$ZIP"
 
       - name: Download built Bonsai
-        if: matrix.variant == 'post1-3730ad9'
+        if: matrix.variant == 'post1-2744f84'
         uses: actions/download-artifact@v4
         with:
           name: bonsai-post1
@@ -83,7 +83,7 @@ jobs:
           cat > check.py <<'EOF'
           import ctypes, pathlib, sys
           import ifcopenshell, ifcopenshell.geom
-          print("ifcopenshell", ifcopenshell.version, ifcopenshell.__file__)
+          print("ifcopenshell", ifcopenshell.version, ifcopenshell.version_core, ifcopenshell.__file__)
           pkg = pathlib.Path(ifcopenshell.__file__).parent
           failed = []
           for path in sorted(pkg.glob("*.dylib")):
