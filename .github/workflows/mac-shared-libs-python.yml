@@ -2,7 +2,7 @@ name: mac-shared-libs-python
 
 # Repro: macOS ifcopenshell 0.9.0 binaries reference shared libs (gmp, mpfr, libxml2, pcre) by absolute
 # paths into the IfcOpenShell CI build tree (/Users/runner/work/IfcOpenShell/...), which doesn't exist here.
-# "fixed" builds a wheel from IfcOpenShell aee494a (binaries 6022a6d), what a corrective release would ship.
+# "post1" builds a wheel from v0.9.0-post1 (62f6a78) with its own binaries, before they are bumped in the Makefile.
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-15, macos-15-intel]
-        variant: [pypi-0.9.0, fixed-aee494a]
+        variant: [pypi-0.9.0, post1-62f6a78]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-python@v6
@@ -32,12 +32,12 @@ jobs:
         if: matrix.variant == 'pypi-0.9.0'
         run: python -m pip install ifcopenshell==0.9.0 pytest
 
-      - name: Checkout IfcOpenShell at aee494a
-        if: matrix.variant == 'fixed-aee494a'
+      - name: Checkout IfcOpenShell at 62f6a78
+        if: matrix.variant == 'post1-62f6a78'
         uses: actions/checkout@v5
         with:
           repository: IfcOpenShell/IfcOpenShell
-          ref: aee494ade45e6f1e61143036db53e78399c211b1
+          ref: 62f6a781f2c039e02593919d5d6709280f21a328
           path: IfcOpenShell
           persist-credentials: false
           sparse-checkout: |
@@ -45,13 +45,13 @@ jobs:
             README.md
             src/ifcopenshell-python
 
-      - name: Build and install wheel from aee494a
-        if: matrix.variant == 'fixed-aee494a'
+      - name: Build and install wheel from 62f6a78
+        if: matrix.variant == 'post1-62f6a78'
         env:
           PLATFORM: ${{ matrix.os == 'macos-15-intel' && 'macos64' || 'macosm164' }}
         run: |
           cd IfcOpenShell/src/ifcopenshell-python
-          make dist PLATFORM="$PLATFORM" PYVERSION=py312 IS_STABLE=TRUE
+          make dist PLATFORM="$PLATFORM" PYVERSION=py312 IS_STABLE=TRUE BINARY_VERSION=0.9.0post1 BUILD_COMMIT=62f6a78
           ls dist
           python -m pip install dist/*.whl pytest
 
