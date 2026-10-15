@@ -2,7 +2,7 @@ name: mac-shared-libs-python
 
 # Repro: macOS ifcopenshell 0.9.0 binaries reference shared libs (gmp, mpfr, libxml2, pcre) by absolute
 # paths into the IfcOpenShell CI build tree (/Users/runner/work/IfcOpenShell/...), which doesn't exist here.
-# "post1" builds a wheel from v0.9.0-post1 (62f6a78) with its own binaries, before they are bumped in the Makefile.
+# "post1" builds a wheel from v0.9.0-post1 (2744f84, binaries b5e509b).
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-15, macos-15-intel]
-        variant: [pypi-0.9.0, post1-62f6a78]
+        variant: [pypi-0.9.0, post1-2744f84]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-python@v6
@@ -32,12 +32,12 @@ jobs:
         if: matrix.variant == 'pypi-0.9.0'
         run: python -m pip install ifcopenshell==0.9.0 pytest
 
-      - name: Checkout IfcOpenShell at 62f6a78
-        if: matrix.variant == 'post1-62f6a78'
+      - name: Checkout IfcOpenShell at 2744f84
+        if: matrix.variant == 'post1-2744f84'
         uses: actions/checkout@v5
         with:
           repository: IfcOpenShell/IfcOpenShell
-          ref: 62f6a781f2c039e02593919d5d6709280f21a328
+          ref: 2744f8426bdef98a486406628a121298a5479690
           path: IfcOpenShell
           persist-credentials: false
           sparse-checkout: |
@@ -45,15 +45,18 @@ jobs:
             README.md
             src/ifcopenshell-python
 
-      - name: Build and install wheel from 62f6a78
-        if: matrix.variant == 'post1-62f6a78'
+      - name: Build and install wheel from 2744f84
+        if: matrix.variant == 'post1-2744f84'
         env:
           PLATFORM: ${{ matrix.os == 'macos-15-intel' && 'macos64' || 'macosm164' }}
         run: |
           cd IfcOpenShell/src/ifcopenshell-python
-          make dist PLATFORM="$PLATFORM" PYVERSION=py312 IS_STABLE=TRUE BINARY_VERSION=0.9.0post1 BUILD_COMMIT=62f6a78
+          make dist PLATFORM="$PLATFORM" PYVERSION=py312 IS_STABLE=TRUE
           ls dist
           python -m pip install dist/*.whl pytest
+
+      - name: Show versions
+        run: python -c "import ifcopenshell; print(ifcopenshell.version, ifcopenshell.version_core)"
 
       - name: Show absolute dylib references
         run: |
