@@ -1,0 +1,32 @@
+name: win 7z in PATH
+
+on:
+  push:
+    paths:
+      - .github/workflows/win-7z-path.yml
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [windows-2022, windows-2025, windows-11-arm]
+    steps:
+      - name: pwsh
+        shell: pwsh
+        run: |
+          foreach ($c in "7z", "7za", "7zr") {
+            $cmd = Get-Command $c -ErrorAction SilentlyContinue
+            if ($cmd) { Write-Host "$c -> $($cmd.Source)" } else { Write-Host "$c -> NOT FOUND" }
+          }
+          7z i | Select-Object -First 3
+
+      - name: cmd
+        shell: cmd
+        run: where 7z
+
+      - name: bash
+        shell: bash
+        run: which 7z
