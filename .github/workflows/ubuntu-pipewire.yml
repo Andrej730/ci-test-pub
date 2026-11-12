@@ -1,0 +1,29 @@
+name: ubuntu pipewire
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-26.04, ubuntu-latest]
+    steps:
+      - name: OS
+        run: lsb_release -ds
+
+      - name: Installed pipewire packages
+        run: dpkg -l | grep -i pipewire || echo "no pipewire packages installed"
+
+      - name: libpipewire in linker cache
+        run: ldconfig -p | grep -i libpipewire || echo "libpipewire-0.3.so.0 NOT FOUND"
+
+      - name: pkg-config (dev files)
+        run: pkg-config --modversion libpipewire-0.3 || echo "libpipewire-0.3.pc NOT FOUND"
+
+      - name: Available from apt
+        run: |
+          sudo apt-get update -qq
+          apt-cache policy libpipewire-0.3-0 libpipewire-0.3-0t64 libpipewire-0.3-dev
