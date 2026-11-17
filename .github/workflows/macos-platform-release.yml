@@ -1,0 +1,20 @@
+name: macOS platform.release
+
+on:
+  push:
+    paths:
+      - .github/workflows/macos-platform-release.yml
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-14, macos-15, macos-15-intel, macos-26, macos-26-intel]
+    steps:
+      - name: platform.release()
+        run: |
+          python3 -c "import platform; print('release:', platform.release()); print('mac_ver:', platform.mac_ver()[0]); print('machine:', platform.machine())"
+          sw_vers
