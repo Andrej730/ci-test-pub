@@ -1,0 +1,29 @@
+name: win cmake --help
+
+on:
+  push:
+    paths:
+      - .github/workflows/win-cmake-help.yml
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [windows-2022, windows-2025, windows-11-arm]
+    steps:
+      - name: cmake location and version
+        shell: cmd
+        run: |
+          where cmake
+          cmake --version
+
+      - name: cmake --help
+        shell: cmd
+        run: cmake --help
+
+      - name: vs-cfg.cmd check for VS2026 generator
+        shell: cmd
+        run: cmake --help | findstr /c:"Visual Studio 18 2026" && echo FOUND || echo NOT FOUND
