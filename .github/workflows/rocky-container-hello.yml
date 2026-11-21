@@ -21,8 +21,8 @@ jobs:
           echo "$PATH" | tr ':' '\n'
           command -v tar
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v10.3.3
+      - name: Add a directory to PATH
+        run: echo "/opt/dummy/bin" >> "$GITHUB_PATH"
 
       - name: Print PATH after uv
         run: |
