@@ -24,6 +24,11 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v10.3.3
 
+      - name: Print PATH after uv
+        run: |
+          echo "$PATH" | tr ':' '\n'
+          command -v tar || echo "tar NOT FOUND"
+
       - uses: actions/checkout@v5
 
       - name: Run hello script
