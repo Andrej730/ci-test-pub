@@ -1,0 +1,22 @@
+name: rocky container hello
+
+on:
+  workflow_dispatch:
+
+jobs:
+  hello:
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ${{ matrix.container.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            container:
+              image: rockylinux:9
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run hello script
+        run: sh scripts/hello.sh
