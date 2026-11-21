@@ -17,7 +17,9 @@ jobs:
               image: rockylinux:9
     steps:
       - name: Print PATH
-        run: echo "$PATH" | tr ':' '\n'
+        run: |
+          echo "$PATH" | tr ':' '\n'
+          command -v tar
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v10.3.3
