@@ -1,9 +1,6 @@
 name: win cmake --help
 
 on:
-  push:
-    paths:
-      - .github/workflows/win-cmake-help.yml
   workflow_dispatch:
 
 jobs:

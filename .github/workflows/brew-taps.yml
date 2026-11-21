@@ -1,9 +1,6 @@
 name: brew taps and update speed
 
 on:
-  push:
-    paths:
-      - .github/workflows/brew-taps.yml
   workflow_dispatch:
 
 jobs:

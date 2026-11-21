@@ -6,9 +6,6 @@ name: mac-shared-libs-python
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/workflows/mac-shared-libs-python.yml
 
 permissions: {}
 

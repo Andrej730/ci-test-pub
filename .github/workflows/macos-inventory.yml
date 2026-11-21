@@ -1,7 +1,6 @@
 name: macOS inventory
 
 on:
-  push:
   workflow_dispatch:
 
 jobs:

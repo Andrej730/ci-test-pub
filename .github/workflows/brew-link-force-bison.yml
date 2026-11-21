@@ -1,9 +1,6 @@
 name: brew link --force bison
 
 on:
-  push:
-    paths:
-      - .github/workflows/brew-link-force-bison.yml
   workflow_dispatch:
 
 jobs:

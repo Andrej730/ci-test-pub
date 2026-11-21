@@ -1,9 +1,6 @@
 name: Intel bison bottle
 
 on:
-  push:
-    paths:
-      - .github/workflows/intel-bison.yml
   workflow_dispatch:
 
 jobs:

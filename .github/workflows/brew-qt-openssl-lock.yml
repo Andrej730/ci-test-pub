@@ -1,9 +1,6 @@
 name: brew install qt openssl@3 lock
 
 on:
-  push:
-    paths:
-      - .github/workflows/brew-qt-openssl-lock.yml
   workflow_dispatch:
 
 jobs:

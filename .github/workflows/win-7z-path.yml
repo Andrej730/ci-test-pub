@@ -1,9 +1,6 @@
 name: win 7z in PATH
 
 on:
-  push:
-    paths:
-      - .github/workflows/win-7z-path.yml
   workflow_dispatch:
 
 jobs:

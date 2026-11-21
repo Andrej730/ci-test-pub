@@ -1,9 +1,6 @@
 name: brew doctor
 
 on:
-  push:
-    paths:
-      - .github/workflows/brew-doctor.yml
   workflow_dispatch:
 
 jobs:

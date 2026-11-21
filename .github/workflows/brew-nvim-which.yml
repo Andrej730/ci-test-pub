@@ -1,9 +1,6 @@
 name: brew install nvim then which
 
 on:
-  push:
-    paths:
-      - .github/workflows/brew-nvim-which.yml
   workflow_dispatch:
 
 jobs:

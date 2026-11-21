@@ -1,9 +1,6 @@
 name: macOS platform.release
 
 on:
-  push:
-    paths:
-      - .github/workflows/macos-platform-release.yml
   workflow_dispatch:
 
 jobs:

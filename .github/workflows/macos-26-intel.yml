@@ -1,9 +1,6 @@
 name: macos-26-intel probe
 
 on:
-  push:
-    paths:
-      - .github/workflows/macos-26-intel.yml
   workflow_dispatch:
 
 jobs:

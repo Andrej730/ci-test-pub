@@ -8,9 +8,6 @@ name: mac-shared-libs-blender
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/workflows/mac-shared-libs-blender.yml
 
 permissions: {}
 

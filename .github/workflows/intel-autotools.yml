@@ -1,9 +1,6 @@
 name: Intel autotools
 
 on:
-  push:
-    paths:
-      - .github/workflows/intel-autotools.yml
   workflow_dispatch:
 
 jobs:
