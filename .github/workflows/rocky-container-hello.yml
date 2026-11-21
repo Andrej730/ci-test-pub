@@ -16,6 +16,9 @@ jobs:
             container:
               image: rockylinux:9
     steps:
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
+
       - uses: actions/checkout@v5
 
       - name: Run hello script
